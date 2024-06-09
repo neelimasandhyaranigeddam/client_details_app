@@ -1,0 +1,97 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(ClientDetailsApp());
+}
+
+class ClientDetailsApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Client Details App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: ClientDetailsScreen(),
+    );
+  }
+}
+
+class ClientDetailsScreen extends StatefulWidget {
+  @override
+  _ClientDetailsScreenState createState() => _ClientDetailsScreenState();
+}
+
+class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
+  String clientName = '';
+  String clientEmail = '';
+  String errorMessage = '';
+
+  Future<void> fetchClientDetails(String clientId) async {
+    final url = Uri.parse('http://127.0.0.1:5000/client/$clientId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          clientName = data['name'];
+          clientEmail = data['email'];
+          errorMessage = '';
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Client not found';
+          clientName = '';
+          clientEmail = '';
+        });
+      }
+    } catch (error) {
+      setState(() {
+        errorMessage = 'Failed to fetch client details';
+        clientName = '';
+        clientEmail = '';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Client Details'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ElevatedButton(
+              onPressed: () => fetchClientDetails('1'),
+              child: Text('Get Client 1 Details'),
+            ),
+            ElevatedButton(
+              onPressed: () => fetchClientDetails('2'),
+              child: Text('Get Client 2 Details'),
+            ),
+            SizedBox(height: 20),
+            if (errorMessage.isNotEmpty)
+              Text(
+                errorMessage,
+                style: TextStyle(color: Colors.red),
+              ),
+            if (clientName.isNotEmpty && clientEmail.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Name: $clientName'),
+                  Text('Email: $clientEmail'),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
